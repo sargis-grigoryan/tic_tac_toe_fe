@@ -1,4 +1,6 @@
 import { Paper, styled } from "@mui/material";
+import x_image from '../../assets/images/x.png';
+import o_image from '../../assets/images/o.png';
 
 export const BoardContainer = styled(Paper)`
     width: 50%;
@@ -32,4 +34,14 @@ export const Cell = styled("div")`
     flex-grow: 1;
     border: 1px solid grey;
     border-radius: 4px;
+    background-size: contain;
+    background-position: center;
+
+    &.x-cell {
+        background-image: url(${x_image});
+    }
+
+    &.o-cell {
+        background-image: url(${o_image});
+    }
 `;

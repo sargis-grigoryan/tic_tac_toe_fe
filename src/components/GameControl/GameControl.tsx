@@ -3,20 +3,25 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import { FC, FormEventHandler, useState } from 'react';
+import { XO } from '../../types';
 import { Button, FormControl, Paper } from './GameControl.styles';
 
 interface GameControlProps {
   isGameStarted: boolean;
-  toggleGame: (playerType: string) => void;
+  toggleGame: (playerType: XO) => void;
+  initialPlayerType: XO;
 }
 
-export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame }) => {
-  const [playerType, setPlayerType] = useState<string>("x");
+export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame, initialPlayerType }) => {
+  const [selectedPlayerType, setSelectedPlayerType] = useState<XO>(initialPlayerType);
 
   const handleSubmit: FormEventHandler = (e) => {
     e.preventDefault();
-    toggleGame(playerType);
+    toggleGame(selectedPlayerType);
   };
+
+  console.log("initialPlayerType", initialPlayerType);
+  
 
   return (
     <Paper elevation={3}>
@@ -25,7 +30,8 @@ export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame })
           <div>
             <FormLabel>Choose Player Type</FormLabel>
             <RadioGroup
-              onChange={(e) => setPlayerType(e.target.value)}
+              onChange={(e) => setSelectedPlayerType(e.target.value as XO)}
+              value={selectedPlayerType}
               row
               name="player-type"
             >
@@ -44,7 +50,7 @@ export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame })
             </RadioGroup>
           </div>
           <Button variant="contained" type="submit">
-            {isGameStarted ? "Stop Game" : "Start Game"}
+            {isGameStarted ? "Stop Game" : "New Game"}
           </Button>
         </FormControl>
       </form>

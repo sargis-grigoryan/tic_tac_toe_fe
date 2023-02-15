@@ -1,44 +1,69 @@
-import { Grid, Paper, styled } from "@mui/material";
+import { Grid } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { useState } from "react";
+import queryString from 'query-string';
+import { FC, useEffect, useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
+import { fetchGameState, makeStep } from "../../requests";
+import { GameState, XO } from "../../types";
 import { Board } from "../Board/Board";
 import { GameControl } from "../GameControl/GameControl";
 import { BoardWrapper } from "./GameStyles";
 
-const Item = styled(Paper)(({ theme }) => ({
-    backgroundColor: '#1A2027',
-    ...theme.typography.body2,
-    padding: theme.spacing(1),
-    textAlign: 'center',
-    color: theme.palette.text.secondary,
-}));
 
-interface GameState {
-    board: ("x" | "o" | null)[][];
-    turn: ("x" | "o")
-}
+export const Game: FC = () => {
+    const queryParams = queryString.parse(window.location.search);
 
-const fetchGameState = (gameId: string) => {
-    return axios
-        .request({
-            url: `game/${gameId}`,
-            method: "GET"
-        })
-}
-
-export const Game = () => {
     const [isGameStarted, setIsGameStarted] = useState<boolean>(false);
-    const gameId = "06d54af8-fe8e-430c-870f-1b86affbb297";
-    const toggleGame = (playerType: string) => {
-        setIsGameStarted((currentValue) => !currentValue);
-        console.log(playerType);
+    const [playerType, setPlayerType] = useState<XO>((queryParams.player || "x") as XO);
+    const [gameId, setGameId] = useState<string>();
 
+    useEffect(() => {
+        if (typeof queryParams.game_id === "string" && queryParams.game_id?.length &&
+            typeof queryParams.player === "string" && ["x", "o"].includes(queryParams.player)) {
+            setGameId(queryParams.game_id);
+            setPlayerType(queryParams.player as XO);
+            setIsGameStarted(true);
+        }
+    }, [queryParams.game_id, queryParams.player]);
+
+    const {
+        data: { data: { board, turn } = { board: undefined, turn: null } } = {},
+        isLoading,
+        refetch
+    } = useQuery<{ data: GameState }>({
+        queryKey: ['gameState'],
+        queryFn: () => fetchGameState(gameId!),
+        refetchInterval: 3000,
+        enabled: !!(gameId && isGameStarted)
+    });
+
+    const toggleGame = (selectedPlayerType: XO) => {
+        if (isGameStarted) {
+            setIsGameStarted(false);
+            return;
+        }
+
+        const stringified = queryString.stringify({
+            game_id: uuidv4(),
+            player: selectedPlayerType
+        });
+
+        window.location.search = stringified;
+    };
+
+    const handleCellClick = async (coord_x: number, coord_y: number) => {
+        console.log(coord_x, coord_y);
+        if (!board || !turn || !gameId || isLoading) return;
+
+        await makeStep({
+            game_id: gameId,
+            player_type: turn,
+            coord_x: coord_x,
+            coord_y: coord_y
+        });
+
+        refetch();
     }
-
-    const { data: {data: gameState} = {}, refetch } = useQuery<{ data: GameState }>({ queryKey: ['gameState'], queryFn: () => fetchGameState(gameId), refetchInterval: 3000, enabled: isGameStarted });
-
-    console.log(JSON.stringify(gameState, null, 4));
 
     return (
         <Grid container spacing={2}>
@@ -46,10 +71,17 @@ export const Game = () => {
                 <GameControl
                     isGameStarted={isGameStarted}
                     toggleGame={toggleGame}
+                    initialPlayerType={playerType}
                 />
             </Grid>
             <BoardWrapper item lg={10} xs={12}>
-                <Board board={gameState?.board} />
+                {board && turn && (
+                    <Board
+                        board={board}
+                        turn={turn}
+                        onCellClick={handleCellClick}
+                    />
+                )}
             </BoardWrapper>
         </Grid>
     );
