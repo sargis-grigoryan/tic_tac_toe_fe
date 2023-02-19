@@ -1,9 +1,9 @@
 import axios from "axios";
-import { XO } from "./types";
+import { GameState, XO } from "./types";
 
 export const fetchGameState = (gameId: string) => {
     return axios
-        .request({
+        .request<GameState>({
             url: `game/${gameId}`,
             method: "GET"
         })

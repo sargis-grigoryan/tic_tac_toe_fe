@@ -1,18 +1,21 @@
-import { FormLabel } from '@mui/material';
+import { FormLabel, Typography } from '@mui/material';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import { FC, FormEventHandler, useState } from 'react';
 import { XO } from '../../types';
-import { Button, FormControl, Paper } from './GameControl.styles';
+import CopyToClipboardButton from '../CopyToClipboardButton';
+import { Button, ClipboardRow, FormControl, GameOver, Paper, PlayerTurn, YouWin } from './GameControl.styles';
 
 interface GameControlProps {
   isGameStarted: boolean;
   toggleGame: (playerType: XO) => void;
   initialPlayerType: XO;
+  turn: XO | null;
+  winner: XO | null;
 }
 
-export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame, initialPlayerType }) => {
+export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame, initialPlayerType, turn, winner }) => {
   const [selectedPlayerType, setSelectedPlayerType] = useState<XO>(initialPlayerType);
 
   const handleSubmit: FormEventHandler = (e) => {
@@ -20,8 +23,10 @@ export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame, i
     toggleGame(selectedPlayerType);
   };
 
-  console.log("initialPlayerType", initialPlayerType);
-  
+  const currentURL = window.location.href;
+  const urlForNextPlayer = selectedPlayerType === "x" ?
+    currentURL.replace("/x", "/o") :
+    currentURL.replace("/o", "/x");
 
   return (
     <Paper elevation={3}>
@@ -48,12 +53,32 @@ export const GameControl: FC<GameControlProps> = ({ isGameStarted, toggleGame, i
                 disabled={isGameStarted}
               />
             </RadioGroup>
+            {isGameStarted &&
+              <PlayerTurn align='center'>{turn === selectedPlayerType ?
+                "It is your turn!" :
+                "Waiting for next player..."
+              }</PlayerTurn>
+            }
+            {winner && winner !== selectedPlayerType &&
+              <GameOver align='center'>Game Over!</GameOver>
+            }
+            {winner === selectedPlayerType &&
+              <YouWin align='center'>You Win!</YouWin>
+            }
           </div>
-          <Button variant="contained" type="submit">
-            {isGameStarted ? "Stop Game" : "New Game"}
-          </Button>
+          <div>
+            {isGameStarted &&
+              <ClipboardRow>
+                {urlForNextPlayer.slice(0, 20)}...
+                <CopyToClipboardButton text={urlForNextPlayer} />
+              </ClipboardRow>
+            }
+            <Button variant="contained" type="submit" fullWidth>
+              {isGameStarted ? "Stop Game" : "New Game"}
+            </Button>
+          </div>
         </FormControl>
       </form>
-    </Paper>
+    </Paper >
   );
 }
