@@ -34,7 +34,6 @@ export const Game: FC = () => {
             return;
         }
 
-
         const newGameId = uuidv4();
         setGameId(newGameId);
         setPlayerType(selectedPlayerType);
